@@ -22,3 +22,6 @@ function MCR(test_image, segmented_image)
 
     return misclassified/total_pixel
 end
+
+function PR()
+end
