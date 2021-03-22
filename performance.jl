@@ -1,7 +1,5 @@
 ## Performance functions
 
-
-
 function MCR(test_image, segmented_image)
     """
     INPUTS
@@ -12,7 +10,7 @@ function MCR(test_image, segmented_image)
     OUTPUT
 
     MRC: outputs a singular MCR number
-    MCR = # of mis-classified pixel /  total number of pixels
+    MRC = # of mis-classified pixel /  total number of pixels
     """
 
     m,n = size(test_image)
@@ -23,5 +21,57 @@ function MCR(test_image, segmented_image)
     return misclassified/total_pixel
 end
 
-function PR()
+function PR(test_image, ground_truths)
+    """
+    INPUT
+    test_image: 2D Array for the image that is segmented
+    segmented_images: 2D Arrat of Dictionart with Segmentation and Boundaries
+
+    #Loop Through the pixel as i
+    ##Loop through the pixels j compared to i, i neq j
+    ###Calculate p_ij
+    ####Loop through all ground truth images at pixel location/ total number of ground truths
+    ###add pij if i and j are labelled the same, 1-pij
+
+    OUTPUT
+    PR: The PR score of the test image
+    """
+
+    s = "Segmentation"
+    numGT = 1#size( ground_truths, 2)
+    PR = 0
+
+    #flatten the image
+    test_image_flat = vec( test_image )
+    m,n = size(test_image)
+    mn = m*n
+
+
+    for i in 1:mn
+        if (i % 5000 == 0)
+            println(i)
+            println(PR)
+        end
+
+        for j in 1:i-1
+            p_ij = 0
+
+            for k in 1:numGT
+                segment = vec( ground_truths[k][s] )
+                if ( segment[i] == segment[j] )
+                    p_ij += 1
+                end
+            end
+
+            p_ij /= numGT
+
+            if ( test_image_flat[i] == test_image_flat[j] )
+                PR += p_ij
+            else
+                PR += (1 - p_ij)
+            end
+        end
+    end
+
+    return PR
 end
