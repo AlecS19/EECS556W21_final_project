@@ -1,5 +1,6 @@
-## Performance functions
+using Clustering: randindex
 
+## Performance functions
 function MCR(test_image, segmented_image)
     """
     INPUTS
@@ -21,7 +22,7 @@ function MCR(test_image, segmented_image)
     return misclassified/total_pixel
 end
 
-function PR(test_image, ground_truths)
+function PR_slow(test_image, ground_truths)
     """
     INPUT
     test_image: 2D Array for the image that is segmented
@@ -38,7 +39,7 @@ function PR(test_image, ground_truths)
     """
 
     s = "Segmentation"
-    numGT = 1#size( ground_truths, 2)
+    numGT = size( ground_truths, 2)
     PR = 0
 
     #flatten the image
@@ -73,5 +74,20 @@ function PR(test_image, ground_truths)
         end
     end
 
+    return PR
+end
+
+function PR_fast(test_image, ground_truths)
+    s = "Segmentation"
+    numGT = size( ground_truths, 2)
+    PR = 0
+
+    #flatten the image
+    test_image_flat = Array{UInt16}(vec( test_image ))
+
+    for k in 1:numGT
+        PR += randindex(test_image_flat, vec( ground_truths[k][s] ))[2]
+    end
+    PR /= numGT
     return PR
 end

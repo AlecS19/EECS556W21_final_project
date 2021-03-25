@@ -29,7 +29,6 @@ p2 = plot(hcor, title="Original Image fig 4")
 ## Testing Gaussian Mixtures
 #Gaussian Mixture Model for fig 4
 using GaussianMixtures
-using RDatasets
 
 iris = dataset("datasets", "iris")
 classes = unique(iris[:,5])
