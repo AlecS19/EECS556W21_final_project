@@ -26,7 +26,7 @@ c, m,n = size(test)
 
 ## kmeans
 #Flatten and run k-means based on intensity
-test_flat = [ vec( test[1,:,:] ) vec( test[2,:,:] ) vec( test[3,:,:] ) ]'.*255
+test_flat = [  vec( test[1,:,:] ) vec( test[2,:,:] ) vec( test[3,:,:])  ]'.*256
 #For some reason scaling to a 255 allows correct segmentation of the skier
 results = kmeans( test_flat, numSegs;init=:rand,tol=1e-6,display=:iter)
 #run kmeans twice to get correct image? Maybe initialization is bad
@@ -44,14 +44,13 @@ display(plot2)
 ## gmm
 data_gmm = Array{Float64,2}(test_flat')
 
-gm = GMM(numSegs,data_gmm;nInit=1,kind=:diag)#full give better accuracy, but not the same picture, when you add extra iterations
+gm = GMM(numSegs,data_gmm;nInit=50,kind=:diag)#full give better accuracy, but not the same picture, when you add extra iterations
 #This seems to give the DGMM results in terms of picture quality and PR ???
 
-gm.μ = results.centers'
-#gm.μ =  Array{Float64}(rand(1:256,(numSegs,3)))
-gm.Σ = ones((numSegs,3))
+#gm.μ = results.centers'
+#gm.μ = [100 100 100; 200 200 200 ]
 
-display( GaussianMixtures.em!(gm,data_gmm;varfloor=1e-5) )
+GaussianMixtures.em!(gm,data_gmm;nIter=200)
 prob = GaussianMixtures.gmmposterior(gm, data_gmm)[1]
 ass=[argmax(prob[i,:]) for i=1:size(data_gmm,1)]
 segmented_gmm = reshape( ass, ( m,n ) ) .*(255/3)
@@ -63,4 +62,4 @@ display(plot3)
 include("performance.jl")
 #Display the MIRT
 PR_kmeans =  PR_fast(segmented,correct)
-PR_gmm = PR_fast(segmented_gmm,correct)
+PR_gmm = PR_fast(segmented_gmm,correct
