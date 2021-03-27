@@ -1,2 +1,14 @@
 Synthetic kmeans MCR = 17.2%
 Synthetic gmm MCR = 29.79%
+
+227092, Clay pot
+227092 kmeans PR = 0.658
+227092 gmm PR = 0.689 with 4 iterations
+
+61060,Skier
+61060 kmeans PR = 0.660
+61060 gmm PR = 0.774 with 11 iterations
+
+260058, Desert
+260058 kmeans PR = 0.642
+260058 gmm PR = 0.846 with 7 iterations
