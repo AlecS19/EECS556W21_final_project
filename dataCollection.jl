@@ -7,6 +7,7 @@ using GaussianMixtures
 using LinearAlgebra:I
 using Statistics: mean
 include("performance.jl")
+
 function kmeanImp(imagename, imagepath, gtname, gtpath, numSegs::Int)
     """
     Inputs:
@@ -65,7 +66,7 @@ function kmeanImp(imagename, imagepath, gtname, gtpath, numSegs::Int)
     MCR_kmean = mean(MCRs)
     
     
-    return PR_kmean, MCR_kmean
+    return segmented, PR_kmean, MCR_kmean
 end
 
 function gmmImp(imagename, imagepath, gtname, gtpath, numSegs::Int)
@@ -110,12 +111,76 @@ function gmmImp(imagename, imagepath, gtname, gtpath, numSegs::Int)
     
     MCR_gmm = mean(MCRs)
     
-    return PR_gmm, MCR_gmm
+    return segmented_gmm, PR_gmm, MCR_gmm
+    
+end
+
+function kmeanImpS(imagename, imagepath,numSegs::Int)
+    """
+    Inputs:
+    image name, image path, number of segmentation labels
+    e..g
+    kmeanImpS("image1.jpg", "/test_images/", 2)
+    """
+ 
+    #Load Test Image
+    curr_dir = pwd()
+    filepath1 = curr_dir * imagepath * imagename
+
+
+
+    test = channelview(load(filepath1))
+    c,m,n = size(test)
+    
+
+    ## kmeans
+    #Flatten and run k-means based on intensity
+    test_flat = [  vec( test[1,:,:] ) vec( test[2,:,:] ) vec( test[3,:,:])  ]'.*256
+    #For some reason scaling to a 255 allows correct segmentation of the skier
+    results = kmeans( test_flat, numSegs;init=:rand,tol=1e-6,display=:iter)
+    #run kmeans twice to get correct image? Maybe initialization is bad
+    #init set to rand seemed to fix the issue
+    
+    segmented = results.assignments
+    segmented = reshape(segmented,(m,n)) .*(255/3)
+    
+    return segmented
+end
+
+function gmmImpS(imagename, imagepath,numSegs::Int)
+    
+    """
+    Inputs:
+    image name, image path, number of segmentation labels
+    e..g
+    kmeanImpS("image1.jpg", "/test_images/", 2)
+    """
+    
+    #Load Test Image
+    curr_dir = pwd()
+    filepath1 = curr_dir * imagepath * imagename
+
+    #Load Ground Truths
+    test = channelview(load(filepath1))
+    c,m,n = size(test)
+
+    test_flat = [  vec( test[1,:,:] ) vec( test[2,:,:] ) vec( test[3,:,:])  ]'.*256
+    data_gmm = Array{Float64,2}(test_flat')
+
+    gm = GMM(numSegs,data_gmm;nInit=50,kind=:diag)#full give better accuracy, but not the same picture, when you add extra iterations
+    #This seems to give the DGMM results in terms of picture quality and PR ???
+
+    #gm.μ = results.centers'
+    #gm.μ = [100 100 100; 200 200 200 ]
+
+    GaussianMixtures.em!(gm,data_gmm;nIter=200)
+    prob = GaussianMixtures.gmmposterior(gm, data_gmm)[1]
+    ass=[argmax(prob[i,:]) for i=1:size(data_gmm,1)]
+    segmented_gmm = reshape( ass, ( m,n ) ) .*(255/3)
+    return segmented_gmm
     
 end
 
 #example:
 #gmmImp("260058.jpg", "/test_images/", "260058.mat", "/ground_truth/",2)
     
-
-
