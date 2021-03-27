@@ -43,3 +43,5 @@ display(plot2)
 
 #Display the MIRT
 print( MCR(segmented,correct) )
+displayable = Array{Float64,2}(segmented'./255)
+save("figure4_segmented_kmeans.png", colorview(Gray, displayable))
