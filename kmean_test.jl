@@ -38,8 +38,10 @@ end
 segmented = reshape( segmented, (128,128) )'
 
 #plot the outcome
-plot2 = jim( segmented, title="segmented")
+plot2 = jim( segmen ted, title="segmented")
 display(plot2)
 
 #Display the MIRT
 print( MCR(segmented,correct) )
+displayable = Array{Float64,2}(segmented'./255)
+save("figure4_segmented_kmeans.png", colorview(Gray, displayable))

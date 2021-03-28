@@ -29,16 +29,13 @@ p2 = plot(hcor, title="Original Image fig 4")
 ## Testing Gaussian Mixtures
 #Gaussian Mixture Model for fig 4
 using GaussianMixtures
-using RDatasets
 
-iris = dataset("datasets", "iris")
-classes = unique(iris[:,5])
 #Must be a size of Array{?,2}
 h = reshape(test, (128*128,1) )
 
-gm  = GMM(4,h)
+gm  = GMM(4,h;kind=:full)
 
-results = GaussianMixtures.em!(gm,h)
+#results = GaussianMixtures.em!(gm,h)
 prob = GaussianMixtures.gmmposterior(gm, h)[1]
 ass=[argmax(prob[i,:]) for i=1:size(h,1)]
 
@@ -56,3 +53,6 @@ segmented = reshape( segmented, (128,128) )
 jim(segmented)
 
 print(MCR(segmented,correct))
+
+displayable = Array{Float64,2}(segmented'./256)
+save("figure4_segmented_gmm.png", colorview(Gray, displayable))
