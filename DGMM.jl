@@ -31,10 +31,47 @@ end
 ## DGMM Functions
 
 #Find the final parameters based on data
-function train(dgmm::DGMM, data::Array{Float64,2}, n::Int64 )
-    #E-step
+function train(dgmm::DGMM, data::Array{Float64,2}, n::Int64, nIter::Int64=200 )
+    global history = []
+    append!(history, 0)
+    dim = size(data)
 
-    #M-step
+    for i in 1:nIter
+        ####### E-step #########
+
+        #Calculate Gaussian Distribution
+        dist = gaus_dist(dgmm, data)
+
+        #Calculate mixing proportion
+        mixprop = π_nk(dgmm, dist, dim)
+
+        #Calculate Posterior probability
+        post_p = post_prob(dgmm, dist, dim)
+
+        ######## M-step ########
+
+        for k in dgmm.n
+        sum_post = sum(post_p[:,k])
+        #Update mean
+        dgmm.μ[k,:] = sum(post_p[:,k].*data) / sum_post
+
+        #Update covariance
+        zero_mean_data = data[:,k] .- dgmm.μ[k,:]
+        dgmm.Σ[k,:] = vec( post_p[:,k].*( ( zero_mean_data )' * ( zero_mean_data ) ) ./ sum_post )
+
+        #Update Beta
+        #TODO: implement gradient descent to update Beta
+        end
+
+        #log liklihood
+        append!( history, log_lik(dgmm, data) )
+
+        #Check convergence
+        if abs.(history[end] - history[end -1] / history[end]) <= 10e-5
+            break
+        end
+    end
+    return history
 end
 
 ## DGMM Helper Functions
