@@ -47,21 +47,27 @@ function train(dgmm::DGMM, data::Array{Float64,2}, n::Int64, nIter::Int64=200 )
 
         #Calculate Posterior probability
         post_p = post_prob(dgmm, dist, dim)
+        print(post_p)
 
         ######## M-step ########
 
         for k in dgmm.n
-        sum_post = sum(post_p[:,k])
-        #Update mean
-        dgmm.μ[k,:] = sum(post_p[:,k].*data) / sum_post
+            sum_post = sum(post_p[:,k])
+            #Update mean
+            print( sum(post_p[:,k].*data) ./ sum_post )
+            dgmm.μ[k,:] = sum(post_p[:,k].*data) ./ sum_post
 
-        #Update covariance
-        zero_mean_data = data[:,k] .- dgmm.μ[k,:]
-        dgmm.Σ[k,:] = vec( post_p[:,k].*( ( zero_mean_data )' * ( zero_mean_data ) ) ./ sum_post )
+            #Update covariance
+            zero_mean_data = data[:,k] .- dgmm.μ[k,:]
+            dgmm.Σ[k,:] = vec( post_p[:,k].*( ( zero_mean_data )' * ( zero_mean_data ) ) ./ sum_post )
+        end
 
         #Update Beta
         #TODO: implement gradient descent to update Beta
-        end
+        dist = gaus_dist(dgmm, dist)
+
+        ϕ  = 10e-6 #Can be adjusted bu this is what the paper uses
+        dgmm.β = dgmm.β - ϕ*partial_beta(dgmm, dist, dim)
 
         #log liklihood
         append!( history, log_lik(dgmm, data) )
@@ -116,6 +122,34 @@ function post_prob(dgmm::DGMM, dist::Array{Float64,2}, dim)
 
     return  p ./ sum(p, dims=2)
 end
+
+function partial_beta(dgmm::DGMM, dist::Array{Float64,2}, dim)
+        f =  π_nk(dgmm, dist, dim) .* dist
+        f_neigh = []
+        window = centered( ones(3,3) )
+
+        global denom = 0
+
+        for k in 1:dgmm.n
+            append!(f_neigh, vec( imfilter( reshape(f[:,k], dim), window ) ) )
+            f_exp = exp.(dgmm.β.*f_neigh[k])
+
+            denom += f_exp
+
+            f_exp .*= f_neigh[k]
+        end
+
+        f_exp ./= denom
+
+        total = zeros( size(dist,1) )
+        for k in 1:dgmm.n
+            total .+= post_prob(dgmm, dist, dim)[:,k] .* (f_neigh[k] .+ f_exp)
+        end
+
+        return sum(total)
+end
+
+
 
 #Calculate the log-liklihood
 function log_lik(dgmm::DGMM, data::Array{Float64,2})
