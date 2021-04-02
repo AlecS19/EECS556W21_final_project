@@ -47,33 +47,32 @@ function train(dgmm::DGMM, data::Array{Float64,2}, n::Int64, nIter::Int64=200 )
 
         #Calculate Posterior probability
         post_p = post_prob(dgmm, dist, dim)
-        print(post_p)
 
         ######## M-step ########
 
         for k in dgmm.n
             sum_post = sum(post_p[:,k])
+
             #Update mean
-            print( sum(post_p[:,k].*data) ./ sum_post )
-            dgmm.μ[k,:] = sum(post_p[:,k].*data) ./ sum_post
+            dgmm.μ[k,:] = sum(post_p[:,k].*data, dims=1) ./ sum_post
 
             #Update covariance
-            zero_mean_data = data[:,k] .- dgmm.μ[k,:]
-            dgmm.Σ[k,:] = vec( post_p[:,k].*( ( zero_mean_data )' * ( zero_mean_data ) ) ./ sum_post )
+            zero_mean_data = data .- dgmm.μ[k,:]
+            dgmm.Σ[k,:] =  sum( post_p[:,k] * reshape( (zero_mean_data'*zero_mean_data), (1,dgmm.d^2) ) , dims=1)
         end
 
         #Update Beta
         #TODO: implement gradient descent to update Beta
-        dist = gaus_dist(dgmm, dist)
+        dist = gaus_dist(dgmm, data)
 
         ϕ  = 10e-6 #Can be adjusted bu this is what the paper uses
         dgmm.β = dgmm.β - ϕ*partial_beta(dgmm, dist, dim)
 
         #log liklihood
         append!( history, log_lik(dgmm, data) )
-
+        print(history[end-1])
         #Check convergence
-        if abs.(history[end] - history[end -1] / history[end]) <= 10e-5
+        if abs.(history[i+1] - history[i] / history[i+1]) <= 10e-5
             break
         end
     end
@@ -120,43 +119,46 @@ function post_prob(dgmm::DGMM, dist::Array{Float64,2}, dim)
 
     p = π_nk(dgmm, dist , dim ) .* dist
 
-    return  p ./ sum(p, dims=2)
+    return  p ./ (sum(p, dims=2) .+ 1e-8)
 end
 
+#Calculate teh partial beta for beta update term
 function partial_beta(dgmm::DGMM, dist::Array{Float64,2}, dim)
+        #create the f function
         f =  π_nk(dgmm, dist, dim) .* dist
-        f_neigh = []
-        window = centered( ones(3,3) )
+        window = centered( ones(3,3) ) #neighborhood
 
-        global denom = 0
+        #Initialize some of the vectors
+        global f_neigh = zeros( size(dist) )
+        global denom = zeros( (size(dist,1),1) )
+        global numer = denom
 
         for k in 1:dgmm.n
-            append!(f_neigh, vec( imfilter( reshape(f[:,k], dim), window ) ) )
-            f_exp = exp.(dgmm.β.*f_neigh[k])
+            global f_neigh[:,k] = vec( imfilter( reshape(f[:,k], dim), window ) )
+            f_exp = exp.(dgmm.β.*f_neigh[:,k])
 
-            denom += f_exp
+            #cumulate the denominator
+            global denom .+= f_exp
+            f_exp .*= f_neigh[:,k]
 
-            f_exp .*= f_neigh[k]
+            #cumulate the numerator
+            global numer .+= f_exp
         end
 
-        f_exp ./= denom
-
-        total = zeros( size(dist,1) )
+        total = zeros( (size(dist,1),1) )
         for k in 1:dgmm.n
-            total .+= post_prob(dgmm, dist, dim)[:,k] .* (f_neigh[k] .+ f_exp)
+            total .+= post_prob(dgmm, dist, dim)[:,k] .* (f_neigh[:,k] .+ (numer./denom))
         end
 
         return sum(total)
 end
-
-
 
 #Calculate the log-liklihood
 function log_lik(dgmm::DGMM, data::Array{Float64,2})
 
     dist = gaus_dist( dgmm, data )
     #TODO: Check to see if the formulation is correct. Not sure where znk came from
-    liklihood = post_prob(dgmm, data) .*( log10.( π_nk(dgmm, dist, size(data)) ) .+ log10.(dist) )
+    liklihood = post_prob(dgmm, dist, size(data)) .*( log10.( π_nk(dgmm, dist, size(data)) ) .+ log10.(dist) )
 
     #TODO: Handle times when the number is NaN
     return sum(liklihood[isnan.(liklihood) .== 0]) #this is dumb
@@ -169,11 +171,12 @@ function π_nk(dgmm::DGMM, dist::Array{Float64,2}, dims)
     global mixprop = zeros( size(dist) )
 
     #Cycle through the number of segments
+
     for k in 1:dgmm.n
-        mixprop[:,k] = exp.( dgmm.β.*vec( imfilter( reshape( dist[:,k], dims ), window ) ) )
+        mixprop[:,k] =  dgmm.β.*vec( imfilter( reshape( dist[:,k], dims ), window ) )
     end
 
-    mixprop = mixprop ./ (sum( mixprop, dims=2) .+ 1e-12) #TODO: make this a parameter, prevent dividing by 0
+    mixprop = exp.(mixprop .- log.( (sum( exp.(mixprop), dims=2) .+ 1e-8) )) #TODO: make this a parameter, prevent dividing by 0
 
     return mixprop
 end
