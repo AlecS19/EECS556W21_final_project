@@ -38,7 +38,7 @@ end
 segmented = reshape( segmented, (128,128) )'
 
 #plot the outcome
-plot2 = jim( segmen ted, title="segmented")
+plot2 = jim( segmented, title="segmented")
 display(plot2)
 
 #Display the MIRT
