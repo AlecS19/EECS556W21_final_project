@@ -1,10 +1,10 @@
 using Flux
 
-function concat(mx::AbstractArray{T,4}, x::AbstractArray{T,4}) where T
+function concat(mx, x)
     return cat(x, mx, dims = 3)
 end
 
-Create_Unet_Model() = Chain(
+Create_Modified_Unet_Model() = Chain(
     BatchNorm(1),
     Conv((3, 3), 1 => 16, pad = 1, relu),
     BatchNorm(16),
