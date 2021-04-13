@@ -9,8 +9,8 @@ curr_dir = pwd()
 filename1 = "figure4b.png"
 filename2 ="figure4a.png"
 
-filepath1 = curr_dir * "/EECS556W21_final_project/test_images/" * filename1
-filepath2 = curr_dir * "/EECS556W21_final_project/test_images/" * filename2
+filepath1 = "test_images/" * filename1
+filepath2 = "test_images/" * filename2
 
 #Convert image data to array data [0-255]
 test = convert(Array{Float64}, load(filepath1) )*255
