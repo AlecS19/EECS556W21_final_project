@@ -5,10 +5,10 @@ using FileIO: load
 include("UNet_Model.jl")
 model_unet = Create_Modified_Unet_Model()
 
-load("Train_Set_Images.jld2", "train_set_image")
-load("Train_Set_Labels.jld2", "train_set_label")
-load("Test_Set_Images.jld2", "test_set_image")
-load("Test_Set_Label.jld2", "test_set_label")
+load("medical_dataset\\Train_Set_Images.jld2", "train_set_image")
+load("medical_dataset\\Train_Set_Labels.jld2", "train_set_label")
+load("medical_dataset\\Test_Set_Images.jld2", "test_set_image")
+load("medical_dataset\\Test_Set_Label.jld2", "test_set_label")
 
 
 train_dataset = Flux.Data.DataLoader((train_set_image,train_set_label), batchsize = 16, shuffle = true)
