@@ -91,3 +91,14 @@ function PR_fast(test_image, ground_truths)
     PR /= numGT
     return PR
 end
+
+function DICE(image, label)
+    #Force images to be binary
+    image = image .> 0.001
+    label = label .> 0.001
+
+    TP = sum((image+label).==2)
+    FP_FN = sum((image+label).==1)
+
+    return 2*TP/(2*TP+FP_FN)
+end
