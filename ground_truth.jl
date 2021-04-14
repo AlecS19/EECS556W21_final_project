@@ -6,16 +6,16 @@ using MAT
 using GaussianMixtures
 using LinearAlgebra:I
 
-numSegs = 2
+numSegs = 3
 #Load Test Image
 curr_dir = pwd()
-imageNum = "260058"
+imageNum = "61060"
 filename1 = imageNum * ".jpg"
-filepath1 = curr_dir * "/EECS556W21_final_project/test_images/" * filename1
+filepath1 = "test_images/" * filename1
 
 #Load Ground Truths
 filename2 = imageNum * ".mat"
-filepath2 = curr_dir * "/EECS556W21_final_project/ground_truth/" * filename2
+filepath2 = "ground_truth/" * filename2
 
 file = matopen(filepath2)
 correct = read(file, "groundTruth") # note that this does NOT introduce a variable ``varname`` into scope
