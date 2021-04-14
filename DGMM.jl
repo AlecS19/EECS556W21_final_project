@@ -10,20 +10,36 @@ mutable struct DGMM
     β::Float64
     n::UInt8 #number of clusters
     d::UInt8 #dimensions
+    dims #dimension of an image
 
     ## Information
     μ::Array{Float64,2} #n x d array of centers
     Σ::Array{Float64,2} #n x d^2 array of covariances
     k::UInt16 #Iteration Number
 
-    function DGMM(n::Int64, d::Int64)
-        new(500,n,d,zeros(n,d),ones(n,d^2),1)
+    ## Intermediates
+    dist::Array{Float64,2} #The gaussian distribution of the data at the current iteration
+    mixprop::Array{Float64,2} #The mixture proportion of the current iteration
+    post_p::Array{Float64,2} #The posterior probability of the current iteration
+
+    function DGMM(n::Int64, d::Int64, dims)
+        i = zeros(n,d)
+        new(500,n,d, dims, #Paramters
+        zeros(n,d),ones(n,d^2),1,#Information
+        i,i,i #Intermediates
+        )
+
     end
 
-    function DGMM(x::Array{Float64,2}, n::Int64)
+    function DGMM(x::Array{Float64,2}, n::Int64, dims)
         #initialize DGMM with kmeans
-        dgmm = DGMM(n, size(x,2))
+        dgmm = DGMM(n, size(x,2),dims)
         init( dgmm, x )
+
+        i = ones(size(x,1),n)./n
+        dgmm.dist = i
+        dgmm.mixprop = i
+        dgmm.post_p = i
         return dgmm
     end
 end
@@ -31,55 +47,63 @@ end
 ## DGMM Functions
 
 #Find the final parameters based on data
-function train(dgmm::DGMM, data::Array{Float64,2}, n::Int64, nIter::Int64=30 )
+function train( dgmm::DGMM, data::Array{Float64,2}, n::Int64, nIter::Int64=80)
     global history = []
-    append!(history, 0)
-    dim = size(data)
+    append!(history, log_lik(dgmm, data))
 
     for i in 1:nIter
+        dgmm.k = UInt8(i)
         println("Iteration $i")
+
         ####### E-step #########
 
         #Calculate Gaussian Distribution
-        dist = gaus_dist(dgmm, data)
+        gaus_dist(dgmm,data)
+        println("Gaussain $(dgmm.dist[1:5,:])")
 
         #Calculate mixing proportion
-        mixprop = π_nk(dgmm, dist, dim)
+        π_nk(dgmm)
+        println("Pi $(dgmm.mixprop[1:5,:])")
 
         #Calculate Posterior probability
-        post_p = post_prob(dgmm, dist, dim)
+        post_prob(dgmm)
+        println("Posterior prob $(dgmm.post_p[1:5,:])")
 
         ######## M-step ########
 
         for k in 1:dgmm.n
-            sum_post = sum(post_p[:,k])
+            sum_post = sum(dgmm.post_p[:,k])
 
             #Update mean
-            dgmm.μ[k,:] = sum(post_p[:,k].*data, dims=1) ./ (sum_post )
+            dgmm.μ[k,:] = sum(dgmm.post_p[:,k].*data, dims=1) ./ (sum_post )
 
             #Update covariance
-            zero_mean_data = data .- dgmm.μ[k,:]
+
+            zero_mean_data = data .- Array{Float64,2}( dgmm.μ[k,:]' )
 
             #dgmm.Σ[k,:] =  sum( post_p[:,k] * reshape( (zero_mean_data'*zero_mean_data), (1,dgmm.d^2) ) , dims=1) ./ sum_post
-
-            dgmm.Σ[k,:] = sum( post_p[:,k] .* mapslices(X -> X'*X  , zero_mean_data, dims=2  ), dims=1) ./sum_post
-
+            if dgmm.d == 1
+                dgmm.Σ[k,:] = sum( dgmm.post_p[:,k] .* mapslices(X ->  X'*X, zero_mean_data, dims=2  ), dims=1) ./sum_post
+            else
+                dgmm.Σ[k,:] = sum( dgmm.post_p[:,k] .* mapslices(X ->vec( X*X'), zero_mean_data, dims=2  ), dims=1) ./sum_post
+            end
         end
 
         #Update Beta
-        #TODO: implement gradient descent to update Beta
-        dist = gaus_dist(dgmm, data)
-
-        ϕ  = 10e-4 #Can be adjusted bu this is what the paper uses
-        dgmm.β = dgmm.β - ϕ*partial_beta(dgmm, dist, dim)
+        gaus_dist(dgmm,data) #For some reason if you do not update this beta turns into NAN
+        π_nk(dgmm)
+        ϕ  = 10e-6 #Can be adjusted bu this is what the paper uses
+        dgmm.β = dgmm.β - ϕ*partial_beta(dgmm)
+        println("Beta $(dgmm.β)")
 
         #log liklihood
         append!( history, log_lik(dgmm, data) )
+        println("Convergence $(abs.(history[i+1]))")
 
         #Check convergence
-        if abs.(history[i+1] - history[i] / history[i+1]) <= 10e-5
-            break
-        end
+        #if abs.(history[i+1] - history[i]) / abs(history[i+1]) < 1e-5
+            #break
+        #end
     end
     return history
 end
@@ -90,64 +114,60 @@ end
 function init(dgmm::DGMM, data::Array{Float64,2})
 
     #Kmeans initialize
-    #TODO: Add additional parameters for kmeans
     results = kmeans(data', dgmm.n)
     dgmm.μ = results.centers'
 
     #Covariance initialization
-    #TODO: Determine how to do find covariance
 
     for i in 1:dgmm.n
         selector = results.assignments .== i
-
         cluster = mapslices( x -> x[selector], data, dims = 1 )
 
         #zero mean
         cluster = cluster .- dgmm.μ[i,:]'
-
-        dgmm.Σ[i,:] = reshape( cluster' * cluster , (dgmm.d^2,1)) ./ size(data,1)
+        dgmm.Σ[i,:] = reshape( cluster' * cluster , (dgmm.d^2,1)) ./ size(cluster,1)
+        #dgmm.Σ[i,:] = reshape( data' * data , (dgmm.d^2,1)) ./ size(data,1)
     end
-
 
 end
 
 #Gaussian Distribution of a Matrix
 function gaus_dist(dgmm::DGMM, data::Array{Float64,2})
-    dist = zeros(  size(data,1), dgmm.n, )
     gaus_dist_exp = (x,cov, mean) -> (x .- mean)' * cov^(-1) * (x .- mean) ./(-2)
 
     for i in 1:dgmm.n
         cov = reshape( dgmm.Σ[i,:], (dgmm.d,dgmm.d) )
         mean = dgmm.μ[i,:]
         coeff =  (2*π)^(dgmm.d/2) * sqrt( abs( det( cov ) ) )
-
-        dist[:,i] = exp.( mapslices(x -> gaus_dist_exp(x,cov,mean), data, dims=2) ) ./coeff
+        dgmm.dist[:,i] = exp.( mapslices(x -> gaus_dist_exp(x,cov,mean), data, dims=2) ) ./coeff
         #dist[:,i] = exp.( (data .- mean) *( cov^(-1) ./(-2) )* (data .- mean)' ) ./ coeff
     end
 
-    return dist
+    return dgmm.dist
 end
 
 #Calculate the posterior probability
-function post_prob(dgmm::DGMM, dist::Array{Float64,2}, dim)
-    temp = π_nk(dgmm, dist , dim )
-    p = temp .* dist
-    return  p ./ (sum(p, dims=2))
+function post_prob(dgmm::DGMM)
+    dgmm.post_p = dgmm.mixprop .* dgmm.dist
+    dgmm.post_p = dgmm.post_p ./ (sum(dgmm.post_p, dims=2))
+    return  dgmm.post_p
 end
 
 #Calculate teh partial beta for beta update term
-function partial_beta(dgmm::DGMM, dist::Array{Float64,2}, dim)
+function partial_beta(dgmm::DGMM)
         #create the f function
-        f =  π_nk(dgmm, dist, dim) .* dist
+        f =  dgmm.mixprop .* dgmm.dist
+        println("f $(f[1:5,:])")
+
         window = centered( ones(3,3) ) #neighborhood
 
         #Initialize some of the vectors
-        global f_neigh = zeros( size(dist) )
-        global denom = zeros( (size(dist,1),1) )
+        global f_neigh = zeros( size(dgmm.dist) )
+        global denom = zeros( (size(dgmm.dist,1),1) )
         global numer = denom
 
         for k in 1:dgmm.n
-            global f_neigh[:,k] = vec( imfilter( reshape(f[:,k], dim), window ) )
+            global f_neigh[:,k] = vec( imfilter( reshape(f[:,k], dgmm.dims), window ) )
             f_exp = exp.(dgmm.β.*f_neigh[:,k])
 
             #cumulate the denominator
@@ -158,9 +178,9 @@ function partial_beta(dgmm::DGMM, dist::Array{Float64,2}, dim)
             global numer .+= f_exp
         end
 
-        total = zeros( (size(dist,1),1) )
+        total = zeros( (size(dgmm.dist,1),1) )
         for k in 1:dgmm.n
-            total .+= post_prob(dgmm, dist, dim)[:,k] .* (f_neigh[:,k] .- (numer./denom))
+            total .+= dgmm.post_p[:,k] .* (f_neigh[:,k] .- (numer./denom))
         end
 
         return sum(total)
@@ -169,28 +189,24 @@ end
 #Calculate the log-liklihood
 function log_lik(dgmm::DGMM, data::Array{Float64,2})
 
-    dist = gaus_dist( dgmm, data )
-    #TODO: Check to see if the formulation is correct. Not sure where znk came from
-    liklihood = post_prob(dgmm, dist, size(data)) .*( log.( π_nk(dgmm, dist, size(data)) ) .+ log.(dist) )
+    liklihood = dgmm.post_p .*( log.( dgmm.mixprop ) .+ log.(dgmm.dist) )
+    liklihood = sum( log.( sum( dgmm.mixprop .* dgmm.dist ,dims=2) ) )
 
-    #TODO: Handle times when the number is NaN
     #return sum(liklihood[isnan.(liklihood) .== 0]) #this is dumb
+
     return sum(liklihood)
 end
 
 #Calculate contextual mixing portion
-function π_nk(dgmm::DGMM, dist::Array{Float64,2}, dims)
+function π_nk(dgmm::DGMM)
 
     window = centered( ones(3,3) )
-    global mixprop = zeros( size(dist) )
 
     #Cycle through the number of segments
-
     for k in 1:dgmm.n
-        mixprop[:,k] =  dgmm.β.*vec( imfilter( reshape( dist[:,k], dims ), window ) )
+        dgmm.mixprop[:,k] =  exp.(dgmm.β.*vec( imfilter( reshape( dgmm.dist[:,k], dgmm.dims ), window ) ))
     end
+    dgmm.mixprop = dgmm.mixprop ./ sum( dgmm.mixprop ,dims=2)
 
-    mixprop = exp.(mixprop .- log.( (sum( exp.(mixprop), dims=2) .+ 1e-8) )) #TODO: make this a parameter, prevent dividing by 0
-
-    return mixprop
+    return dgmm.mixprop
 end
