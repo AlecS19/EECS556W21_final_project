@@ -50,6 +50,7 @@ jim(segmented_gmm)
 
 segmented_gmm = (segmented_gmm) .-1
 segmented_gmm = segmented_gmm .> 0 #flatten the segmentations
+
 #GT = (abs.(load("medImage1_GT/ID_0006_AGE_0075_CONTRAST_1_CT.png")) ./ 3)'
 picnum = "Test_Set_Label"
 filepath1 = picnum *".jld2"
