@@ -2,20 +2,11 @@ using Images
 using FileIO: save
 using NIfTI
 using GZip
-using MIRTjim:jim
 using Statistics:mean
 
 Image_path = "Brain_dataset\\"
 
 filenames = readdir(Image_path)
-
-
-test = niread(Image_path * filenames[7])
-test2 = niread(Image_path * filenames[8])
-#test2 = niread(Label_path * filenames[1])
-
-jim(test)
-jim(test2)
 
 images = zeros(256,256,1,39)
 annotations = zeros(256,256,1,7)
