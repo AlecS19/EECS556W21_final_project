@@ -22,6 +22,9 @@ test_set_label = load(Image_path * "Test_Set_Label.jld2", "test_set_label")
 train_dataset = Flux.Data.DataLoader((train_set_image,train_set_label), batchsize = 4, shuffle = true)
 test_dataset = Flux.Data.DataLoader((test_set_image,test_set_label), batchsize = 2, shuffle = true, partial = false)
 
+#@load "CNN_model.bson" model_unet
+
+
 ##########
 # Set up and train model
 ##########
@@ -29,8 +32,6 @@ test_dataset = Flux.Data.DataLoader((test_set_image,test_set_label), batchsize =
 
 include("UNet_Model.jl")
 model_unet = Create_Modified_Unet_Model()
-
-#@load "CNN_model.bson" model_unet
 
 function loss(x, y)
          Flux.binarycrossentropy(model_unet(x),y)
