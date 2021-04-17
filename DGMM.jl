@@ -153,7 +153,7 @@ function post_prob(dgmm::DGMM)
     return  dgmm.post_p
 end
 
-#Calculate teh partial beta for beta update term
+#Calculate the partial beta for beta update term
 function partial_beta(dgmm::DGMM)
         #create the f function
         f =  dgmm.mixprop .* dgmm.dist
