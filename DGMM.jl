@@ -47,7 +47,7 @@ end
 ## DGMM Functions
 
 #Find the final parameters based on data
-function train( dgmm::DGMM, data::Array{Float64,2}, n::Int64, nIter::Int64=80)
+function train( dgmm::DGMM, data::Array{Float64,2}, n::Int64, nIter::Int64=10)
     global history = []
     append!(history, log_lik(dgmm, data))
 
@@ -118,7 +118,6 @@ function init(dgmm::DGMM, data::Array{Float64,2})
     dgmm.μ = results.centers'
 
     #Covariance initialization
-
     for i in 1:dgmm.n
         selector = results.assignments .== i
         cluster = mapslices( x -> x[selector], data, dims = 1 )
@@ -126,7 +125,7 @@ function init(dgmm::DGMM, data::Array{Float64,2})
         #zero mean
         cluster = cluster .- dgmm.μ[i,:]'
         dgmm.Σ[i,:] = reshape( cluster' * cluster , (dgmm.d^2,1)) ./ size(cluster,1)
-        #dgmm.Σ[i,:] = reshape( data' * data , (dgmm.d^2,1)) ./ size(data,1)
+
     end
 
 end
@@ -140,7 +139,6 @@ function gaus_dist(dgmm::DGMM, data::Array{Float64,2})
         mean = dgmm.μ[i,:]
         coeff =  (2*π)^(dgmm.d/2) * sqrt( abs( det( cov ) ) )
         dgmm.dist[:,i] = exp.( mapslices(x -> gaus_dist_exp(x,cov,mean), data, dims=2) ) ./coeff
-        #dist[:,i] = exp.( (data .- mean) *( cov^(-1) ./(-2) )* (data .- mean)' ) ./ coeff
     end
 
     return dgmm.dist
@@ -190,9 +188,8 @@ end
 function log_lik(dgmm::DGMM, data::Array{Float64,2})
 
     liklihood = dgmm.post_p .*( log.( dgmm.mixprop ) .+ log.(dgmm.dist) )
-    liklihood = sum( log.( sum( dgmm.mixprop .* dgmm.dist ,dims=2) ) )
 
-    #return sum(liklihood[isnan.(liklihood) .== 0]) #this is dumb
+    #liklihood = sum( log.( sum( dgmm.mixprop .* dgmm.dist ,dims=2) ) )
 
     return sum(liklihood)
 end

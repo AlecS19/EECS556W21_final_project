@@ -66,5 +66,6 @@ correct = read(file, "groundTruth") # note that this does NOT introduce a variab
 close(file)
 print( PR_fast(segmented_gmm,correct) )
 
-jim(segmented_gmm')
+p4 = jim(segmented_gmm')
+display(p4)
 display(pcolor)
