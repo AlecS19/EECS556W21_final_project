@@ -47,7 +47,7 @@ end
 ## DGMM Functions
 
 #Find the final parameters based on data
-function train( dgmm::DGMM, data::Array{Float64,2}, n::Int64, nIter::Int64=80)
+function train( dgmm::DGMM, data::Array{Float64,2}, n::Int64, nIter::Int64=60)
     global history = []
     append!(history, log_lik(dgmm, data))
 
@@ -59,15 +59,15 @@ function train( dgmm::DGMM, data::Array{Float64,2}, n::Int64, nIter::Int64=80)
 
         #Calculate Gaussian Distribution
         gaus_dist(dgmm,data)
-        println("Gaussain $(dgmm.dist[1:5,:])")
+        #println("Gaussain $(dgmm.dist[1:5,:])")
 
         #Calculate mixing proportion
         π_nk(dgmm)
-        println("Pi $(dgmm.mixprop[1:5,:])")
+        #println("Pi $(dgmm.mixprop[1:5,:])")
 
         #Calculate Posterior probability
         post_prob(dgmm)
-        println("Posterior prob $(dgmm.post_p[1:5,:])")
+        #println("Posterior prob $(dgmm.post_p[1:5,:])")
 
         ######## M-step ########
 
@@ -94,16 +94,16 @@ function train( dgmm::DGMM, data::Array{Float64,2}, n::Int64, nIter::Int64=80)
         π_nk(dgmm)
         ϕ  = 10e-6 #Can be adjusted bu this is what the paper uses
         dgmm.β = dgmm.β - ϕ*partial_beta(dgmm)
-        println("Beta $(dgmm.β)")
+        #println("Beta $(dgmm.β)")
 
         #log liklihood
         append!( history, log_lik(dgmm, data) )
-        println("Convergence $(abs.(history[i+1]))")
+        #println("Convergence $(abs.(history[i+1]))")
 
         #Check convergence
-        #if abs.(history[i+1] - history[i]) / abs(history[i+1]) < 1e-5
-            #break
-        #end
+        if abs.(history[i+1] - history[i]) / abs(history[i+1]) < 10e-5
+            break
+        end
     end
     return history
 end
@@ -157,10 +157,11 @@ end
 function partial_beta(dgmm::DGMM)
         #create the f function
         f =  dgmm.mixprop .* dgmm.dist
-        println("f $(f[1:5,:])")
+        #println("f $(f[1:5,:])")
 
-        window = centered( ones(3,3) ) #neighborhood
-
+        window = centered( ones(3,3) ) #2nd order neighborhood
+        #window = centered( [0 1 0; 1 1 1; 0 1 0] )#1st order neighborhood
+        #window = centered( [-1 -1 -1; -1 8 -1; -1 -1 -1] )
         #Initialize some of the vectors
         global f_neigh = zeros( size(dgmm.dist) )
         global denom = zeros( (size(dgmm.dist,1),1) )
@@ -201,10 +202,11 @@ end
 function π_nk(dgmm::DGMM)
 
     window = centered( ones(3,3) )
-
+    #window = centered( [0 1 0; 1 1 1; 0 1 0] )
+    #window = centered( [-1 -1 -1; -1 8 -1; -1 -1 -1] )
     #Cycle through the number of segments
     for k in 1:dgmm.n
-        dgmm.mixprop[:,k] =  exp.(dgmm.β.*vec( imfilter( reshape( dgmm.dist[:,k], dgmm.dims ), window ) ))
+        dgmm.mixprop[:,k] =  exp.( dgmm.β.* vec( imfilter( reshape( dgmm.dist[:,k], dgmm.dims ), window ) ) )
     end
     dgmm.mixprop = dgmm.mixprop ./ sum( dgmm.mixprop ,dims=2)
 

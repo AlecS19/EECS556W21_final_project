@@ -2,6 +2,8 @@ using Images: load, channelview
 include("performance.jl")
 using MIRT: jim
 using Plots
+using Statistics: median
+using ImageFiltering: mapwindow
 #Testing DGMM
 
 
@@ -15,6 +17,7 @@ correct = convert(Array{Float64}, load(filepath2)) .* 255
 
 test = convert(Array{Float64}, load(filepath1)) .* 255 #right now the data type is not capable of handling the data when it is 0 -1
 m, n = size(test)
+#test = mapwindow( median, test, (5,5) )
 test_flat = Array{Float64,2}(reshape(test, 1, :)')
 
 include("DGMM.jl")
@@ -43,28 +46,39 @@ print(MCR(segmented, correct))
 display(img_seg)
 
 ## Test with color
+include("DGMM.jl")
+using Images: load, channelview
+include("performance.jl")
+using MIRT: jim
+using Plots
 picnum = "61060"
-filepath3 = "test_images/"* picnum *".jpg"
+filepath3 = "test_images/" * picnum * ".jpg"
 test_color = channelview(load(filepath3))
 c, m, n = size(test_color)
-test_color_flat = Array{Float64,2}([vec(test_color[1, :, :]) vec(test_color[2, :, :]) vec(test_color[3,:,:,])] .* 255,)
-numsegs= 3
+test_color_flat = Array{Float64,2}(
+    [vec(test_color[1, :, :]) vec(test_color[2, :, :]) vec(test_color[
+        3,
+        :,
+        :,
+    ])] .* 255,
+)
+numsegs = 3
 color_dgmm = DGMM(test_color_flat, numsegs, (m, n))
 
 color_history = train(color_dgmm, test_color_flat, numsegs)
 color_prob = post_prob(color_dgmm)
 pcolor = plot(color_history)
-ass=[argmax(color_prob[i,:]) for i=1:size(test_color_flat,1)]
-segmented_gmm = reshape(ass, ( m,n ) ) .*(255/3)
+ass = [argmax(color_prob[i, :]) for i = 1:size(test_color_flat, 1)]
+segmented_gmm = reshape(ass, (m, n)) .* (255 / 3)
 jim(segmented_gmm')
 
 
 using MAT
-filepath4 = "ground_truth/" *picnum* ".mat"
+filepath4 = "ground_truth/" * picnum * ".mat"
 file = matopen(filepath4)
 correct = read(file, "groundTruth") # note that this does NOT introduce a variable ``varname`` into scope
 close(file)
-print( PR_fast(segmented_gmm,correct) )
+print(PR_fast(segmented_gmm, correct))
 
 jim(segmented_gmm')
 display(pcolor)
