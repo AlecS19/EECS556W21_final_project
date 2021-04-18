@@ -43,3 +43,4 @@ Lastly, some of our preliminary results can be found in the results folder. Thes
 ## References:
 [1] T. Xiong, L. Zhang, and Z. Yi. “Double Gaussian mixture model for image segmentation with spatialrelationships”. In:Journal of Visual Communication and Image Representation34 (2016), 135–145.DOI:10.1016/j.jvcir.2015.10.018
 [2] Quantification of Uncertainties in Biomedical Image Quantification Challenge. 2020. URL:https://qubiq.grand-challenge.org/Home/
+
