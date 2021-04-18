@@ -101,9 +101,9 @@ function train( dgmm::DGMM, data::Array{Float64,2}, n::Int64, nIter::Int64=80)
         println("Convergence $(abs.(history[i+1]))")
 
         #Check convergence
-        #if abs.(history[i+1] - history[i]) / abs(history[i+1]) < 1e-5
-            #break
-        #end
+        if abs.(history[i+1] - history[i]) / abs(history[i+1]) < 10e-5
+            break
+        end
     end
     return history
 end

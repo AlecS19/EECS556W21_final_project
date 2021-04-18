@@ -29,24 +29,27 @@ include("performance.jl")
 include("DGMM.jl")
 using MIRT: jim
 using Plots
+using Statistics
+using ImageFiltering
 
-picnum = "Test_Set_images"
+picnum = "Test_Set_Images"
 filepath1 = picnum *".jld2"
-numsegs = 2
+numsegs = 3
 test = load(filepath1)["test_set_image"][:,:,1,2]
+test = mapwindow(median, test, (5,5))
 m, n = size(test)
-test_flat = Array{Float64,2}(reshape(test, 1, :)')
+test_flat = Array{Float64,2}(reshape(test, 1, :)').*(255/1000) .+ 1
 A = DGMM(test_flat, numsegs, (m, n))
 E = log_lik(A, test_flat)
-gray_history = train(A, test_flat, numsegs, 5)
+gray_history = train(A, test_flat, numsegs, 4)
 p1 = plot(gray_history)
 display(p1)
 D = post_prob(A)
 ass = [argmax(D[i, :]) for i = 1:size(D, 1)]
 segmented_gmm = reshape(ass, ( m,n ) )
-jim(segmented_gmm)
+r = jim(segmented_gmm)
 
-
+display(r)
 
 segmented_gmm = (segmented_gmm) .-1
 segmented_gmm = segmented_gmm .> 0 #flatten the segmentations
@@ -71,4 +74,3 @@ else
     print(b)
     plot(jim(segmented_gmm_inverted),jim(GT))
 end
-
