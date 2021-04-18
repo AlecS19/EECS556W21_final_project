@@ -78,3 +78,14 @@ for i in 1:size(test_set_image,4)
 end
 test_dice = test_dice / size(test_set_image,4)
 @show test_dice
+
+
+##########
+# Determine number of parameters
+##########
+
+paramnum = 0
+unet_params = Flux.params(model_unet)
+for i in 1:length(unet_params)
+        paramnum = paramnum + length(unet_params[i])
+end
