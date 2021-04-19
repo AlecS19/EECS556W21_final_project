@@ -8,6 +8,11 @@ The goal of this project is to replicate the algorithm and results of " Double G
 In this report, we describe several image segmentation models and present our results from the implementation and evaluation of the Double Gaussian mixture model described in \cite{DGMM} for the segmentation of various image sets (natural, synthetic, and medical images). We compare this model's performance to that of a standard GMM model, a standard k-means clustering model, and a convolutional neural network (CNN) segmentation model trained on our medical images data set \cite{dataset}. Our performance metrics applied to evaluate these methods were the Probabilistic Rand (PR) index and the Dice Score, and we found that the CNN method generally performed much better than the other segmentation models, and that the DGMM performed better than the GMM and k-means for the natural and synthetic images but had poor performance for the medical images.
 
 ## Example Results
+This first example compares the synthetic image and segmentation results for k-means, gmm, and dgmm from [1].
+![Grayscale_comparison](results/Sythetic_comparison.png)
+
+This is an example comparing natural image and segmentation results for k-mean, gmm, and dgmm from [1].
+![Natural_comparison](results/natural_comparison.png)
 
 
 ### Description
