@@ -12,7 +12,7 @@ using MIRTjim:jim
 ##########
 
 
-Image_path = "Brain_dataset\\"
+Image_path = "test_images\\"
 
 train_set_image = load(Image_path * "Train_Set_Images.jld2", "train_set_image")
 train_set_label = load(Image_path * "Train_Set_Labels.jld2", "train_set_label")
@@ -51,7 +51,7 @@ end
 # View Images and compute accuracies
 ##########
 
-include("performance.jl")
+include(pwd()*"\\performance.jl")
 
 viewimage = 5
 
