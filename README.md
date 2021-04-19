@@ -15,6 +15,7 @@ In this report, we describe several image segmentation models and present our re
 
 
 [1] T. Xiong, L. Zhang, and Z. Yi. “Double Gaussian mixture model for image segmentation with spatial relationships”. In: Journal of Visual Communication and Image Representation 34 (2016), 135–145. DOI:10.1016/j.jvcir.2015.10.018
+
 [2] Quantification of Uncertainties in Biomedical Image Quantification Challenge. 2020. URL:https://qubiq.grand-challenge.org/Home/
 
 ## Example Results
