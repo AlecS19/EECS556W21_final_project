@@ -32,7 +32,7 @@ test_set_image = convert(Array{Float32,4}, images[:,:,:,33:39])
 test_set_label = convert(Array{Float32,4}, labels[:,:,:,33:39])
 
 
-save(Image_path * "Train_Set_Images.jld2", "train_set_image", train_set_image)
-save(Image_path * "Train_Set_Labels.jld2", "train_set_label", train_set_label)
-save(Image_path * "Test_Set_Images.jld2", "test_set_image", test_set_image)
-save(Image_path * "Test_Set_Label.jld2", "test_set_label", test_set_label)
+save("test_images\\" * "Train_Set_Images.jld2", "train_set_image", train_set_image)
+save("test_images\\"  * "Train_Set_Labels.jld2", "train_set_label", train_set_label)
+save("test_images\\"  * "Test_Set_Images.jld2", "test_set_image", test_set_image)
+save("test_images\\"  * "Test_Set_Label.jld2", "test_set_label", test_set_label)
