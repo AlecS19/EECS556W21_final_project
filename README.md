@@ -1,3 +1,9 @@
+### Members Unique Names
+-alecsoc
+-amakuch
+-higginss
+-najariac
+
 # EECS556W21_final_project
 Final project for EECS 556: Image processing of Winter 2021
 
