@@ -11,7 +11,11 @@ The goal of this project is to replicate the algorithm and results of " Double G
 
 
 ## Paper Abstract
-In this report, we describe several image segmentation models and present our results from the implementation and evaluation of the Double Gaussian mixture model described in \cite{DGMM} for the segmentation of various image sets (natural, synthetic, and medical images). We compare this model's performance to that of a standard GMM model, a standard k-means clustering model, and a convolutional neural network (CNN) segmentation model trained on our medical images data set \cite{dataset}. Our performance metrics applied to evaluate these methods were the Probabilistic Rand (PR) index and the Dice Score, and we found that the CNN method generally performed much better than the other segmentation models, and that the DGMM performed better than the GMM and k-means for the natural and synthetic images but had poor performance for the medical images.
+In this report, we describe several image segmentation models and present our results from the implementation and evaluation of the Double Gaussian mixture model described in [1] for the segmentation of various image sets (natural, synthetic, and medical images). We compare this model's performance to that of a standard GMM model, a standard k-means clustering model, and a convolutional neural network (CNN) segmentation model trained on our medical images data set [2]. Our performance metrics applied to evaluate these methods were the Probabilistic Rand (PR) index and the Dice Score, and we found that the CNN method generally performed much better than the other segmentation models, and that the DGMM performed better than the GMM and k-means for the natural and synthetic images but had poor performance for the medical images.
+
+
+[1] T. Xiong, L. Zhang, and Z. Yi. “Double Gaussian mixture model for image segmentation with spatial relationships”. In: Journal of Visual Communication and Image Representation 34 (2016), 135–145. DOI:10.1016/j.jvcir.2015.10.018
+[2] Quantification of Uncertainties in Biomedical Image Quantification Challenge. 2020. URL:https://qubiq.grand-challenge.org/Home/
 
 ## Example Results
 This first example compares the synthetic image and segmentation results for k-means, gmm, and dgmm from [1].
