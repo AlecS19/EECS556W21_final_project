@@ -24,7 +24,7 @@ This is an example comparing natural image and segmentation results for k-mean, 
 ### Description
 The code in this repo attempts to reproduce the results found in [1] in julia. The k-means and gaussian mixture model(GMM) are utlized from the following [Clustering](https://juliastats.org/Clustering.jl/) and [GaussianMixtures](https://github.com/davidavdav/GaussianMixtures.jl). The Double gaussian mixture model(DGMM) is implemented in the from scratch in [DGMM](DGMM.jl).
 
-In addition to the implemented DGMM, we tested image segmentation with the medical dataset [2] with a convolutional neural net (CNN). The model framework is derived from a U-net. All testing, model, and data files are located in [CNN](CNN/).
+In addition to the implemented DGMM, we tested image segmentation with the medical dataset [2] with a convolutional neural net (CNN). The model framework is derived from a U-net. All testing, model, and data files are located in [CNN](CNN/). The UNet_model.jk code has been modified from previous code [3].
 
 The [performance.jl](performance.jl) is a collection of performance related functions such as misclassification ratio(MCR), the probabalistic rand index(PR), and DICE score.
 
@@ -53,5 +53,8 @@ Lastly, some of our preliminary results can be found in the results folder. Thes
 
 ## References:
 [1] T. Xiong, L. Zhang, and Z. Yi. “Double Gaussian mixture model for image segmentation with spatialrelationships”. In:Journal of Visual Communication and Image Representation34 (2016), 135–145.DOI:10.1016/j.jvcir.2015.10.018
+
 [2] Quantification of Uncertainties in Biomedical Image Quantification Challenge. 2020. URL:https://qubiq.grand-challenge.org/Home/
+
+[3] https://gist.github.com/haampie/bceb1d59fd9a44f092f913062e58d482
 
